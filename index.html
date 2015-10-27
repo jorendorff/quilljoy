@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Quilljoy - Beautiful collaborative text editing that mostly works</title>
+    <style>
+      #editor {
+        margin: 0; padding: 0; border: none; font-size: 180%; font-family: monospace;
+        position: absolute; left: 0; right: 0; width: 100%; top: 0; bottom: 0; height: 100%;
+      }
+    </style>
+    <link rel="stylesheet" type="text/css" href="slow.io/slow.io.css">
+  </head>
+  <body>
+    <div id="editor"></div>
+  </body>
+</html>
+<script src="https://cdn.quilljs.com/0.20.0/quill.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="/slow.io/slow.io.js"></script>
+<script>
+  (function () {
+    var socket = io();
+    var quill = new Quill("#editor");
+
+    // When the server tells us something, apply it to the editor.
+    socket.on("init", function (text) {
+      quill.setText(text);
+    });
+    socket.on("edit", function (delta) {
+      quill.updateContents(delta);
+    });
+
+    // When the user makes a change in the editor, send it to the server.
+    quill.on("text-change", function(delta, who) {
+      if (who == "user")
+        socket.emit("edit", delta, quill.getText());
+    });
+  })();
+</script>
